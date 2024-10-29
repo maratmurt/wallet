@@ -3,9 +3,11 @@ package com.example.wallet.service;
 import com.example.wallet.domain.OperationDto;
 import com.example.wallet.domain.OperationType;
 import com.example.wallet.domain.Wallet;
+import com.example.wallet.exception.InsufficientFundsException;
+import com.example.wallet.exception.WalletNotFoundException;
+import com.example.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.example.wallet.repository.WalletRepository;
 
 import java.util.UUID;
 
@@ -29,6 +31,9 @@ public class WalletService {
         if (operation.operationType().equals(OperationType.DEPOSIT)) {
             balance += amount;
         } else {
+            if (balance < amount) {
+                throw new InsufficientFundsException();
+            }
             balance -= amount;
         }
         wallet.setBalance(balance);
@@ -36,7 +41,9 @@ public class WalletService {
     }
 
     public Double getBalance(UUID walletId) {
-        return walletRepository.findById(walletId).orElseThrow().getBalance();
+        return walletRepository.findById(walletId)
+                .orElseThrow(() -> new WalletNotFoundException("Wallet " + walletId + " not found!"))
+                .getBalance();
     }
 
 }
