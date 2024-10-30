@@ -6,25 +6,25 @@ import com.example.wallet.domain.Wallet;
 import com.example.wallet.exception.InsufficientFundsException;
 import com.example.wallet.exception.WalletNotFoundException;
 import com.example.wallet.repository.WalletRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WalletService {
 
     private final WalletRepository walletRepository;
 
+    @Transactional
     public void makeOperation(OperationDto operation) {
         UUID walletId = operation.walletId();
-        Wallet wallet = walletRepository.findById(walletId).orElseGet(()->{
-            Wallet newWallet = new Wallet();
-            newWallet.setId(walletId);
-            newWallet.setBalance(0D);
-            return walletRepository.save(newWallet);
-        });
+        Wallet wallet = walletRepository.findByIdWithLock(walletId)
+                .orElseThrow(() -> new WalletNotFoundException(walletId));
         Double balance = wallet.getBalance();
         Double amount = operation.amount();
 
@@ -42,7 +42,7 @@ public class WalletService {
 
     public Double getBalance(UUID walletId) {
         return walletRepository.findById(walletId)
-                .orElseThrow(() -> new WalletNotFoundException("Wallet " + walletId + " not found!"))
+                .orElseThrow(() -> new WalletNotFoundException(walletId))
                 .getBalance();
     }
 

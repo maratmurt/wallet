@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-@Entity(name = "wallet")
+@Entity
 public class Wallet {
 
     @Id
